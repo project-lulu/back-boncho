@@ -1,10 +1,11 @@
+const argon2 = require('argon2');
+
 module.exports = {
 	method: 'post',
 	path: '/pass/verify',
 	async exec(req, res) {
 		let body;
 		let userArr;
-		let userData;
 
 		try {
 			body = JSON.parse(req.body);
@@ -25,10 +26,53 @@ module.exports = {
 			return;
 		}
 
-		for (let i = 0; i < userArr.length; i++) {
-			const userData = (await globalThis.db.get(`user_${userArr[i]}`));
+		try {
+			let _userArrReq;
 
-			//
+			_userArrReq = await fetch(`http://${globalThis.config.performer.services.paradise.host}/${globalThis.config.performer.services.paradise.port}/users`);
+
+			userArr = (await _userArrReq.json()).ids;
+		} catch (e) {
+			res.status(500).send(JSON.stringify({
+				error: 3
+			}));
+			return;
+		}
+
+		let authed = 0;
+
+		try {
+			for (let i = 0; i < userArr.length; i++) {
+				let req = await fetch(`http://${globalThis.config.performer.services.paradise.host}/${globalThis.config.performer.services.paradise.port}/user/${userArr[i]}`);
+				let data = await req.json();
+	
+				if (data.payload.username === body.username) {
+					if (await argon2.verify(data.payload.passhash, body.password)) {
+						authed = 1;
+					} else {
+						authed = 0;
+					}
+					
+					break;
+				}
+			}
+		} catch (e) {
+			res.status(500).send(JSON.stringify({
+				error: 4
+			}));
+			return;
+		}
+
+		if (!authed) {
+			res.status(401).send(JSON.stringify({
+				error: 5
+			}));
+
+			return;
+		} else {
+			res.status(200).send(/* token */);
+
+			return;
 		}
 	}
 }
