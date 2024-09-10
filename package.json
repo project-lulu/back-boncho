@@ -1,0 +1,11 @@
+{
+	"name": "back-boncho",
+	"version": "1.0.0",
+	"main": "src/main.js",
+	"repository": "https://github.com/project-lulu/back-boncho.git",
+	"license": "EUPL-1.2",
+	"dependencies": {
+		"argon2": "^0.41.1",
+		"express": "^4.20.0"
+	}
+}
